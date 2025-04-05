@@ -1,37 +1,58 @@
 const express = require('express');
-const passport = require('passport');
-const session = require('express-session');
-require('./auth/passport');
-require('dotenv').config();
+const cookieParser = require('cookie-parser');
+const dotenv = require('dotenv');
+const path = require('path');
+const jwt = require('jsonwebtoken');
+dotenv.config();
+const JWT_SECRET = process.env.JWT_SECRET;
+
 
 const app = express();
+const PORT = 3000;
 
-app.use(session( {
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true
-}));
+app.use(cookieParser());
 
-app.use(passport.initialize());
-app.use(passport.session());
+//this file has
+    //route /
+    //button to go to /auth/google
+    //initialization of server
 
-app.get('/auth/google',
-    passport.authenticate('google', {
-      scope: ['profile', 'email']
-    })
-  );
+const authRoutes = require('./auth/oauth');
 
-   
-app.get('/auth/google/callback', 
-    passport.authenticate('google', {failureRedirect: '/login'}), 
-    (req,res)=> {
-        res.send('you are logged in as ' + req.user.displayName);
+app.use('/auth',authRoutes);
+
+app.get('/profile', (req,res) => {
+    const token = req.cookies.token;
+
+    if(!token) {
+        return res.status(401).send('Unauthrized NO TOKEN providEd');
     }
-);
 
-app.get('/profile', (req,res)=> {
-    if(!req.user) return res.send('Not logged in');
-    res.send(`Welcome ${req.user.displayName}`);
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        res.send(`
+            <h1>Welcome, ${decoded.name}</h1>
+            <img src="${decoded.picture}" alt="Profile Picture" width="100"/>
+            <p>Email: ${decoded.email}</p>
+            <a href="/logout">Logout</a>
+        `);
+    } catch(err) {
+        console.log(err.message);
+        console.log(JWT_SECRET);
+        
+        return res.status(401).send('Unauthorized : Invalid token');
+    }
 });
 
-app.listen(3000, ()=> console.log('server running 3000'));
+app.get('/logout', (req,res)=> {
+    res.clearCookie('token');
+    res.send('<h2>You have been logged out by clearCookie() </h2><a href="/">Login again</a>')
+})
+
+app.get('/', (req,res) => {
+    res.send('<a href="/auth/google">Login with Google</a>');
+});
+
+app.listen(PORT, () => {
+    console.log("Started running dw");
+});
