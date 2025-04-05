@@ -3,6 +3,7 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const authMiddleware = require('./middleware/authMiddleware');
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -21,27 +22,15 @@ const authRoutes = require('./auth/oauth');
 
 app.use('/auth',authRoutes);
 
-app.get('/profile', (req,res) => {
-    const token = req.cookies.token;
 
-    if(!token) {
-        return res.status(401).send('Unauthrized NO TOKEN providEd');
-    }
-
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        res.send(`
-            <h1>Welcome, ${decoded.name}</h1>
-            <img src="${decoded.picture}" alt="Profile Picture" width="100"/>
-            <p>Email: ${decoded.email}</p>
+//below authMiddleware will set req.user if user exists or else won't allow this route
+app.get('/profile', authMiddleware, (req,res) => {
+    res.send( `   
+            <h1>Welcome, ${req.user.name}</h1>
+            <img src="${req.user.picture}" alt="Profile Picture" width="100"/>
+            <p>Email: ${req.user.email}</p>
             <a href="/logout">Logout</a>
         `);
-    } catch(err) {
-        console.log(err.message);
-        console.log(JWT_SECRET);
-        
-        return res.status(401).send('Unauthorized : Invalid token');
-    }
 });
 
 app.get('/logout', (req,res)=> {
