@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const authMiddleware = require('./middleware/authMiddleware');
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
+const rateLimiter = require('./middleware/rateLimiter');
 
 
 const app = express();
@@ -21,7 +22,7 @@ app.use(cookieParser());
 const authRoutes = require('./auth/oauth');
 
 app.use('/auth',authRoutes);
-
+app.use('/profile',rateLimiter);
 
 //below authMiddleware will set req.user if user exists or else won't allow this route
 app.get('/profile', authMiddleware, (req,res) => {

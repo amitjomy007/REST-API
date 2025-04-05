@@ -12,3 +12,5 @@ Commit Versions and their Features
 ✅v2 - oAuth from scratch without passport. JWT Sessions, cookies
 
 ✅v3 - added middleware to check if loggedIn
+
+✅v4 - Redis Rate Limiting
