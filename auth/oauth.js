@@ -10,6 +10,7 @@ const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
 
+// the /google/callback was set in oAuth settings in google console
 router.get('/google/callback', async(req,res) => {
     const code = req.query.code;
     if(!code) {
@@ -17,8 +18,9 @@ router.get('/google/callback', async(req,res) => {
     }
 
     try {
+        // the code is the key player, who decides which user's token is retrieved from googleapi
         const tokenRes = await axios.post('https://oauth2.googleapis.com/token', {
-            code,
+            code, 
             client_id: CLIENT_ID,
             client_secret: CLIENT_SECRET,
             redirect_uri: REDIRECT_URI,
